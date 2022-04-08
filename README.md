@@ -8,3 +8,8 @@ Just set three values in the code.
 `$DuplicateFolder` the folder to store duplicate songs in.
 
 `$CompleteFolder` to the folder to throw the normalized songs in.
+
+
+#Unbinder.ps1
+
+Unbinds the songs in the folder you specify from the datastore file.
