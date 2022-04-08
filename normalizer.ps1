@@ -1,9 +1,9 @@
 [Reflection.Assembly]::LoadFrom( (Resolve-Path "taglib.dll"))
 
 #Setup these folders
-$StagingFolder = "E:\DJTestFolder"
-$DuplicateFolder = "E:\DJSongDupes"
-$CompleteFolder = "E:\DJSongsComplete"
+$StagingFolder = "E:\DJ\DJ Full Songs"
+$DuplicateFolder = "E:\DJ\NewDupes"
+$CompleteFolder = "E:\DJ\Parsed"
 
 $global:SongDS = @()
 $DSFile = "$(Get-Location)\song_datastore.xml"
@@ -53,8 +53,25 @@ foreach($song in Get-ChildItem -LiteralPath $StagingFolder) {
     $MediaMeta.Tag.Grouping = $SongHash.Hash
     $MediaMeta.Save()
 
+    #Title with no illegal characters.
+    $FilteredTitle = $MediaMeta.Tag.Title
+    $FilteredTitle = $FilteredTitle.replace("`"", "").replace("*", "_").replace("/", "_").replace(":", " ").replace("?", "")
+    $newName = ($FilteredTitle + $song.Extension)
+
+    #Check if exact song title exists in completed folder
+    if ((Test-Path -LiteralPath "$CompleteFolder\$newName") -eq $true) {
+        Write-Host "{{File exists for [$newName] Checking if song is a duplicate."
+        $SongInQuestion = [TagLib.File]::Create((resolve-path -LiteralPath "$CompleteFolder\$newName"))
+        if ($SongInQuestion.Tag.Artists -eq $MediaMeta.Tag.Artists) {
+            Write-Host "Song is duplicate. Moving it to duplicate folder.}}"
+            Move-Item -LiteralPath $song.Fullname -Destination $DuplicateFolder
+            continue
+        } else {
+            $newName = ($FilteredTitle + " ($($MediaMeta.Tag.Artists))" + $song.Extension)
+        }
+    }
+
     #Transfer item to the complete folder and rename file to metadata title.
-    $newName = ($MediaMeta.Tag.Title + $song.Extension) -replace "\*", "_"
     Move-Item -LiteralPath $song.Fullname -Destination "$CompleteFolder\$newName"
 
 }
